@@ -351,34 +351,6 @@ npm run models
 node src/list-models.js
 ```
 
-## 测试聊天端点
-
-有些第三方服务商的模型页面只写了 `/v1/chat/completions`，不一定支持 `/v1/images/generations` 或 `/v1/images/edits`。这时可以用探测脚本看聊天端点到底返回什么格式：
-
-```bash
-npm run chat:probe -- --prompt-file prompts/2.txt
-```
-
-如果没有 `npm`：
-
-```bash
-node src/chat-completions-probe.js --prompt-file prompts/2.txt
-```
-
-这个脚本会真实请求：
-
-```text
-POST /v1/chat/completions
-```
-
-它会打印状态码、request id、响应正文摘要，并尝试识别返回内容里有没有图片 URL 或 base64 图片。如果响应里发现 base64 图片，可以加 `--save-images` 保存候选图片：
-
-```bash
-node src/chat-completions-probe.js --prompt-file prompts/2.txt --save-images
-```
-
-注意：这是一次真实外部请求，可能消耗服务商额度。它只是用于判断服务商的聊天端点是否能返回图片相关结果，不会改变 v1/v2/v3 的图片接口实现。
-
 ## 常用参数
 
 ```bash
