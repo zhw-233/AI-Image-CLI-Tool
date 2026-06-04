@@ -126,6 +126,24 @@ npm run v1:generate -- "A simple red apple on a white background"
 npm run v3:generate -- "A simple red apple on a white background"
 ```
 
+如果你的 prompt 很长，建议放到文本文件里：
+
+```bash
+node src/generate.js --prompt-file prompts/example.txt
+```
+
+你也可以自己创建一个文件，比如：
+
+```text
+prompts/beauty-studio.txt
+```
+
+然后运行：
+
+```bash
+node src/generate.js --prompt-file prompts/beauty-studio.txt
+```
+
 运行时会实时输出当前执行步骤，例如：
 
 ```text
@@ -163,6 +181,40 @@ npm run generate -- --dry-run "A small glass greenhouse on a rainy morning"
 ```
 
 切换 provider 后，建议先 dry-run 一次，确认请求 URL 是否正确。
+
+## 长 prompt 的推荐写法
+
+长提示词最好不要直接塞进一行终端命令里。更稳的做法是写进 UTF-8 文本文件，再用 `--prompt-file` 读取。
+
+项目里已经带了一个示例：
+
+```text
+prompts/example.txt
+```
+
+可以直接测试：
+
+```bash
+node src/generate.js --dry-run --prompt-file prompts/example.txt
+```
+
+文件里的 prompt 可以写成结构化形式，例如：
+
+```text
+Subject:
+一位成年办公室职员，半身肖像
+
+Scene:
+明亮现代办公室，办公桌、电脑、绿植
+
+Lighting:
+柔和自然光
+
+Style:
+真实摄影风格，画面干净专业
+```
+
+脚本会保留中间的换行内容，只去掉文件开头和结尾多余空白。
 
 ## v3：provider guard 防止连续踩坑
 
@@ -238,6 +290,12 @@ npm run v2:edit -- --image outputs/base.png "Keep the apple, change the backgrou
 npm run v3:edit -- --image outputs/base.png "Keep the apple, change the background to pale blue"
 ```
 
+如果编辑 prompt 很长，也可以放到文件里：
+
+```bash
+node src/edit.js --image outputs/base.png --prompt-file prompts/example.txt
+```
+
 v2 的迭代流程是：
 
 ```text
@@ -308,6 +366,7 @@ npm run generate -- \
 
 - `--base-url <url>`：OpenAI-compatible API 的基础地址
 - `--api-url <url>`：完整的图片生成接口地址，会覆盖 `--base-url`
+- `--prompt-file <path>`：从 UTF-8 文本文件读取 prompt
 - `--model <name>`：模型名
 - `--size <size>`：图片尺寸，例如 `1024x1024`
 - `--quality <quality>`：质量，例如 `auto`、`low`、`medium`、`high`

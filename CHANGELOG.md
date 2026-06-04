@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.0 - 2026-06-04
+
+- Added `--prompt-file <path>` for v1 text-to-image generation.
+- Added `--prompt-file <path>` for v2 image editing.
+- Added a `prompts/example.txt` template for long structured prompts.
+
 ## v0.3.0 - 2026-06-04
 
 - Added v3 provider guard for safer use with unstable third-party providers.

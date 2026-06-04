@@ -28,9 +28,12 @@ async function main() {
     return;
   }
 
-  const prompt = cli.prompt?.trim();
+  const prompt = await resolvePrompt(
+    cli,
+    "Please provide an edit prompt. Example: node src/edit.js --image outputs/base.png \"Change the background to pale blue\""
+  );
   if (!prompt) {
-    fail("Please provide an edit prompt. Example: node src/edit.js --image outputs/base.png \"Change the background to pale blue\"");
+    fail("Prompt file is empty after trimming.");
   }
 
   if (!cli.images.length) {
@@ -200,6 +203,7 @@ function parseArgs(args) {
     dryRun: false,
     help: false,
     images: [],
+    promptFile: "",
     promptParts: [],
   };
 
@@ -222,6 +226,8 @@ function parseArgs(args) {
       parsed.apiUrl = readValue(args, ++index, arg);
     } else if (arg === "--base-url") {
       parsed.baseUrl = readValue(args, ++index, arg);
+    } else if (arg === "--prompt-file") {
+      parsed.promptFile = readValue(args, ++index, arg);
     } else if (arg === "--model") {
       parsed.model = readValue(args, ++index, arg);
     } else if (arg === "--size") {
@@ -244,6 +250,36 @@ function parseArgs(args) {
   parsed.prompt = parsed.promptParts.join(" ");
   delete parsed.promptParts;
   return parsed;
+}
+
+async function resolvePrompt(cli, missingMessage) {
+  const inlinePrompt = cli.prompt?.trim();
+  if (inlinePrompt && cli.promptFile) {
+    fail("Use either an inline prompt or --prompt-file <path>, not both.");
+  }
+
+  if (cli.promptFile) {
+    step("Loading prompt file", cli.promptFile);
+    return readPromptFile(cli.promptFile);
+  }
+
+  if (!inlinePrompt) {
+    fail(missingMessage);
+  }
+
+  return inlinePrompt;
+}
+
+async function readPromptFile(filePath) {
+  if (!existsSync(filePath)) {
+    fail(`Prompt file does not exist: ${filePath}`);
+  }
+
+  const contents = await readFile(filePath, "utf8").catch((error) => {
+    fail(`Could not read prompt file ${filePath}: ${error.message}`);
+  });
+
+  return contents.trim();
 }
 
 function readValue(args, index, flag) {
@@ -459,6 +495,7 @@ Options:
   --mask <path>           Optional mask image for partial edits.
   --base-url <url>        OpenAI-compatible base URL. Defaults to OPENAI_BASE_URL.
   --api-url <url>         Full image edits endpoint URL. Overrides base URL.
+  --prompt-file <path>    Read the prompt from a UTF-8 text file.
   --model <name>          Image model. Defaults to OPENAI_IMAGE_MODEL or gpt-image-2.
   --size <size>           Example: 1024x1024, 1024x1536, 1536x1024.
   --quality <quality>     Example: auto, low, medium, high.
