@@ -1,0 +1,8 @@
+.env
+.env.active
+.provider-guard.json
+providers.json
+outputs/*
+!outputs/.gitkeep
+node_modules/
+.DS_Store

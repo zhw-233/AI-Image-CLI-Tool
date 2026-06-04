@@ -1,0 +1,23 @@
+{
+  "providers": {
+    "openai": {
+      "name": "OpenAI",
+      "baseUrl": "https://api.openai.com/v1",
+      "model": "gpt-image-2",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "authHeader": "Authorization",
+      "authScheme": "Bearer"
+    },
+    "third-party": {
+      "name": "Your OpenAI-compatible provider",
+      "baseUrl": "https://your-provider.example.com/v1",
+      "model": "gpt-image-2",
+      "apiKeyEnv": "THIRD_PARTY_API_KEY",
+      "authHeader": "Authorization",
+      "authScheme": "Bearer",
+      "extraHeaders": {
+        "X-Provider": "example"
+      }
+    }
+  }
+}
