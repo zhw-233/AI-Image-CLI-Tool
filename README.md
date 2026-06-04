@@ -201,16 +201,16 @@ node src/generate.js --dry-run --prompt-file prompts/example.txt
 文件里的 prompt 可以写成结构化形式，例如：
 
 ```text
-Subject:
+主体：
 一位成年办公室职员，半身肖像
 
-Scene:
+场景：
 明亮现代办公室，办公桌、电脑、绿植
 
-Lighting:
+光线：
 柔和自然光
 
-Style:
+风格：
 真实摄影风格，画面干净专业
 ```
 
