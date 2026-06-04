@@ -1,16 +1,12 @@
-import { readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import process from "node:process";
+import { loadEnvFiles, resolveApiKey } from "./common.js";
 
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
-const ENV_FILES = [".env", ".env.active"];
 
 async function main() {
-  const env = await loadEnvFiles(ENV_FILES);
-  const apiKeyEnv = env.OPENAI_API_KEY_ENV;
-  const apiKeySource = apiKeyEnv && env[apiKeyEnv] ? apiKeyEnv : "OPENAI_API_KEY";
-  const apiKey = env[apiKeySource];
+  const env = await loadEnvFiles([".env", ".env.active"]);
+  const apiKeySource = env.OPENAI_API_KEY_ENV && env[env.OPENAI_API_KEY_ENV] ? env.OPENAI_API_KEY_ENV : "OPENAI_API_KEY";
+  const apiKey = resolveApiKey(env);
   const baseUrl = env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
   const apiUrl =
     env.OPENAI_IMAGE_GENERATIONS_URL ||
@@ -37,49 +33,6 @@ async function main() {
     "Official OpenAI URL is not paired with a third-party key variable",
     "Official OpenAI URL appears to be paired with a third-party key variable."
   );
-}
-
-async function loadEnvFiles(files) {
-  const env = {};
-
-  for (const file of files) {
-    const filePath = path.resolve(file);
-    if (!existsSync(filePath)) {
-      continue;
-    }
-
-    Object.assign(env, parseEnv(await readFile(filePath, "utf8")));
-  }
-
-  return env;
-}
-
-function parseEnv(contents) {
-  const parsed = {};
-
-  for (const line of contents.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) {
-      continue;
-    }
-
-    const [key, ...valueParts] = trimmed.split("=");
-    parsed[key] = stripQuotes(valueParts.join("="));
-  }
-
-  return parsed;
-}
-
-function stripQuotes(value) {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-
-  return trimmed;
 }
 
 function maskSecret(value) {

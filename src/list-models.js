@@ -1,7 +1,4 @@
-import { readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
-import path from "node:path";
-import process from "node:process";
+import { loadEnvFiles, resolveApiKey, buildHeaders } from "./common.js";
 
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
 
@@ -40,69 +37,6 @@ async function main() {
       console.log(`- ${id}`);
     }
   }
-}
-
-async function loadEnvFiles(files) {
-  const env = {};
-
-  for (const file of files) {
-    const filePath = path.resolve(file);
-    if (!existsSync(filePath)) {
-      continue;
-    }
-
-    Object.assign(env, parseEnv(await readFile(filePath, "utf8")));
-  }
-
-  return env;
-}
-
-function parseEnv(contents) {
-  const parsed = {};
-
-  for (const line of contents.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) {
-      continue;
-    }
-
-    const [key, ...valueParts] = trimmed.split("=");
-    parsed[key] = stripQuotes(valueParts.join("="));
-  }
-
-  return parsed;
-}
-
-function stripQuotes(value) {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-
-  return trimmed;
-}
-
-function resolveApiKey(env) {
-  const apiKeyEnv = env.OPENAI_API_KEY_ENV;
-  if (apiKeyEnv && env[apiKeyEnv]) {
-    return env[apiKeyEnv];
-  }
-
-  return env.OPENAI_API_KEY;
-}
-
-function buildHeaders(env, apiKey) {
-  const authHeader = env.OPENAI_AUTH_HEADER || "Authorization";
-  const authScheme = env.OPENAI_AUTH_SCHEME ?? "Bearer";
-  const authValue = authScheme ? `${authScheme} ${apiKey}` : apiKey;
-
-  return {
-    [authHeader]: authValue,
-    "Content-Type": "application/json",
-  };
 }
 
 function fail(message) {

@@ -2,7 +2,18 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { recordProviderFailure, recordProviderSuccess, runProviderGuard } from "./provider-guard.js";
+import {
+  baseUrlFromApiUrl,
+  buildHeaders,
+  joinUrl,
+  loadEnvFiles,
+  makeFilename,
+  parseJson,
+  readPromptFile,
+  readValue,
+  resolveApiKey,
+  truncate,
+} from "./common.js";
 
 const DEFAULTS = {
   baseUrl: "https://api.openai.com/v1",
@@ -14,12 +25,13 @@ const DEFAULTS = {
   outputFormat: "png",
   outputDir: "outputs",
 };
+
 let stepIndex = 0;
 const startedAt = Date.now();
 
 async function main() {
   step("Loading environment files", ".env, .env.active");
-  await loadEnvFiles([".env", ".env.active"]);
+  await loadEnvFiles([".env", ".env.active"], { mutateProcessEnv: true });
 
   step("Parsing command line arguments");
   const cli = parseArgs(process.argv.slice(2));
@@ -55,7 +67,6 @@ async function main() {
   };
 
   const apiUrl = options.apiUrl ?? joinUrl(options.baseUrl, options.editPath);
-  const providerBaseUrl = baseUrlFromApiUrl(apiUrl, options.baseUrl);
   const fields = buildFields(prompt, options);
   step("Prepared edit request", `model=${fields.model}, url=${apiUrl}, images=${options.images.length}`);
 
@@ -71,72 +82,37 @@ async function main() {
   }
 
   step("Resolving API key");
-  const apiKey = resolveApiKey();
+  const apiKey = resolveApiKey(process.env);
   if (!apiKey) {
     fail("Missing API key. Set OPENAI_API_KEY, or set OPENAI_API_KEY_ENV to the name of another key variable.");
   }
 
-  const headers = buildMultipartHeaders(apiKey);
-  await runProviderGuard({
-    apiKey,
-    baseUrl: providerBaseUrl,
-    env: process.env,
-    fail,
-    force: cli.force,
-    headers,
-    model: fields.model,
-    noPreflight: cli.noPreflight,
-    operation: "image edit",
-    step,
-  });
-
+  const headers = buildHeaders(process.env, apiKey, { contentType: undefined });
   step("Building multipart form data");
   const form = await buildFormData(fields, options);
 
-  let response;
-  let rawBody;
+  step("Sending image edit request", "real external request");
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers,
+    body: form,
+  });
 
-  try {
-    step("Sending image edit request", "no local timeout");
-    response = await fetch(apiUrl, {
-      method: "POST",
-      headers,
-      body: form,
-    });
-
-    step("Received API response headers", `status=${response.status}`);
-    const requestId = getRequestId(response.headers);
-    if (requestId) {
-      step("Provider request id", requestId);
-    }
-
-    step("Reading response body");
-    rawBody = await response.text();
-  } catch (error) {
-    throw error;
+  step("Received API response headers", `status=${response.status}`);
+  const requestId = getRequestId(response.headers);
+  if (requestId) {
+    step("Provider request id", requestId);
   }
+
+  step("Reading response body");
+  const rawBody = await response.text();
 
   step("Parsing response body", `${rawBody.length} bytes`);
-  const body = parseResponseBody(rawBody);
+  const body = parseJson(rawBody);
   if (!response.ok) {
     const detail = body?.error?.message ?? (truncate(rawBody) || response.statusText);
-    await recordProviderFailure({
-      baseUrl: providerBaseUrl,
-      detail,
-      env: process.env,
-      model: fields.model,
-      status: response.status,
-      step,
-    });
     fail(`OpenAI API request failed (${response.status}): ${detail}`);
   }
-
-  await recordProviderSuccess({
-    baseUrl: providerBaseUrl,
-    env: process.env,
-    model: fields.model,
-    step,
-  });
 
   step("Reading edited image data from response");
   if (!body) {
@@ -150,7 +126,7 @@ async function main() {
 
   step("Saving edited image file", `outputDir=${options.outputDir}`);
   await mkdir(options.outputDir, { recursive: true });
-  const filename = makeFilename(prompt, options.outputFormat);
+  const filename = makeFilename(prompt, options.outputFormat, { fallback: "edited-image", prefix: "v2" });
   const outputPath = path.join(options.outputDir, filename);
   await writeFile(outputPath, Buffer.from(imageBase64, "base64"));
 
@@ -214,10 +190,6 @@ function parseArgs(args) {
       parsed.help = true;
     } else if (arg === "--dry-run") {
       parsed.dryRun = true;
-    } else if (arg === "--force") {
-      parsed.force = true;
-    } else if (arg === "--no-preflight") {
-      parsed.noPreflight = true;
     } else if (arg === "--image") {
       parsed.images.push(readValue(args, ++index, arg));
     } else if (arg === "--mask") {
@@ -270,27 +242,6 @@ async function resolvePrompt(cli, missingMessage) {
   return inlinePrompt;
 }
 
-async function readPromptFile(filePath) {
-  if (!existsSync(filePath)) {
-    fail(`Prompt file does not exist: ${filePath}`);
-  }
-
-  const contents = await readFile(filePath, "utf8").catch((error) => {
-    fail(`Could not read prompt file ${filePath}: ${error.message}`);
-  });
-
-  return contents.trim();
-}
-
-function readValue(args, index, flag) {
-  const value = args[index];
-  if (!value || value.startsWith("--")) {
-    fail(`Missing value for ${flag}`);
-  }
-
-  return value;
-}
-
 async function assertReadableFiles(files, label) {
   for (const file of files) {
     if (!existsSync(file)) {
@@ -301,121 +252,6 @@ async function assertReadableFiles(files, label) {
       fail(`Could not read input ${label} ${file}: ${error.message}`);
     });
   }
-}
-
-async function loadEnvFiles(files) {
-  const fileEnv = {};
-
-  for (const file of files) {
-    const envPath = path.resolve(file);
-    if (!existsSync(envPath)) {
-      continue;
-    }
-
-    const contents = await readFile(envPath, "utf8").catch((error) => {
-      fail(`Could not read ${file}: ${error.message}`);
-    });
-
-    Object.assign(fileEnv, parseEnv(contents));
-  }
-
-  for (const [key, value] of Object.entries(fileEnv)) {
-    if (!process.env[key]) {
-      process.env[key] = value;
-    }
-  }
-}
-
-function parseEnv(contents) {
-  const parsed = {};
-
-  for (const line of contents.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) {
-      continue;
-    }
-
-    const [key, ...valueParts] = trimmed.split("=");
-    parsed[key] = stripQuotes(valueParts.join("="));
-  }
-
-  return parsed;
-}
-
-function resolveApiKey() {
-  const apiKeyEnv = process.env.OPENAI_API_KEY_ENV;
-  if (apiKeyEnv && process.env[apiKeyEnv]) {
-    return process.env[apiKeyEnv];
-  }
-
-  if (process.env.OPENAI_API_KEY) {
-    return process.env.OPENAI_API_KEY;
-  }
-
-  return undefined;
-}
-
-function buildMultipartHeaders(apiKey) {
-  const authHeader = process.env.OPENAI_AUTH_HEADER || "Authorization";
-  const authScheme = process.env.OPENAI_AUTH_SCHEME ?? "Bearer";
-  const authValue = authScheme ? `${authScheme} ${apiKey}` : apiKey;
-
-  return {
-    ...readExtraHeaders(),
-    [authHeader]: authValue,
-  };
-}
-
-function readExtraHeaders() {
-  const rawHeaders = process.env.OPENAI_EXTRA_HEADERS;
-  if (!rawHeaders || rawHeaders === "{}") {
-    return {};
-  }
-
-  try {
-    const headers = JSON.parse(rawHeaders);
-    if (!headers || Array.isArray(headers) || typeof headers !== "object") {
-      fail("OPENAI_EXTRA_HEADERS must be a JSON object, for example: {\"X-Provider\":\"example\"}");
-    }
-
-    return headers;
-  } catch (error) {
-    fail(
-      `OPENAI_EXTRA_HEADERS must be valid JSON. Use double quotes, for example: {"X-Provider":"example"}. ${error.message}`
-    );
-  }
-}
-
-function joinUrl(baseUrl, pathname) {
-  return `${baseUrl.replace(/\/+$/g, "")}/${pathname.replace(/^\/+/g, "")}`;
-}
-
-function baseUrlFromApiUrl(apiUrl, fallbackBaseUrl) {
-  try {
-    const url = new URL(apiUrl);
-    if (url.pathname.includes("/v1/")) {
-      url.pathname = url.pathname.slice(0, url.pathname.indexOf("/v1/") + 3);
-    } else {
-      url.pathname = "/v1";
-    }
-    url.search = "";
-    url.hash = "";
-    return url.toString().replace(/\/+$/g, "");
-  } catch {
-    return fallbackBaseUrl;
-  }
-}
-
-function stripQuotes(value) {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-
-  return trimmed;
 }
 
 function mimeTypeFor(filePath) {
@@ -429,29 +265,6 @@ function mimeTypeFor(filePath) {
   }
 
   return "image/png";
-}
-
-function makeFilename(prompt, extension) {
-  const slug = prompt
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 48) || "edited-image";
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-
-  return `${stamp}-v2-${slug}.${extension}`;
-}
-
-function parseResponseBody(rawBody) {
-  if (!rawBody) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawBody);
-  } catch {
-    return null;
-  }
 }
 
 function getRequestId(headers) {
@@ -471,14 +284,6 @@ function getRequestId(headers) {
   }
 
   return "";
-}
-
-function truncate(text, maxLength = 1000) {
-  if (!text) {
-    return "";
-  }
-
-  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
 
 function printHelp() {
@@ -503,8 +308,6 @@ Options:
   --format <format>       Example: png, jpeg, webp.
   --output-dir <path>     Defaults to outputs.
   --dry-run               Print the request payload without calling the API.
-  --force                 Ignore provider guard cooldown and preflight failures.
-  --no-preflight          Skip the safe GET /models check before image editing.
   --help                  Show this help.
 `);
 }

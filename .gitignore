@@ -1,6 +1,5 @@
 .env
 .env.active
-.provider-guard.json
 providers.json
 outputs/*
 !outputs/.gitkeep

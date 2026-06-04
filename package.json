@@ -1,13 +1,12 @@
 {
   "name": "gpt-image-2-demo",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "v1:generate": "node src/generate.js",
     "v2:edit": "node src/edit.js",
-    "v3:generate": "node src/generate.js",
-    "v3:edit": "node src/edit.js",
+    "v4:probe": "node src/chat-completions-probe.js",
     "generate": "node src/generate.js",
     "edit": "node src/edit.js",
     "dry-run": "node src/generate.js --dry-run \"A clean product photo of a ceramic tea cup on a walnut desk\"",
@@ -16,7 +15,7 @@
     "provider:use": "node src/switch-provider.js use",
     "doctor": "node src/doctor.js",
     "models": "node src/list-models.js",
-    "check": "node --check src/generate.js && node --check src/edit.js && node --check src/provider-guard.js && node --check src/switch-provider.js && node --check src/doctor.js && node --check src/list-models.js"
+    "check": "node --check src/common.js && node --check src/generate.js && node --check src/edit.js && node --check src/chat-completions-probe.js && node --check src/switch-provider.js && node --check src/doctor.js && node --check src/list-models.js"
   },
   "engines": {
     "node": ">=20"
