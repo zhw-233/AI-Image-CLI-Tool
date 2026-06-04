@@ -126,7 +126,7 @@ async function main() {
 
   step("Saving edited image file", `outputDir=${options.outputDir}`);
   await mkdir(options.outputDir, { recursive: true });
-  const filename = makeFilename(prompt, options.outputFormat, { fallback: "edited-image", prefix: "v2" });
+  const filename = makeFilename(prompt, options.outputFormat, { fallback: "edited-image" });
   const outputPath = path.join(options.outputDir, filename);
   await writeFile(outputPath, Buffer.from(imageBase64, "base64"));
 

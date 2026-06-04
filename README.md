@@ -2,11 +2,11 @@
 
 这是一个很小的 Node.js CLI，用来调用 OpenAI-compatible 的图片与聊天接口。
 
-当前保留三条功能线：
+当前包含三项主要能力：
 
-- v1：文本生成图片
-- v2：基于图片继续编辑
-- v4：探测 `/v1/chat/completions`
+- 文本生成图片
+- 基于图片继续编辑
+- 探测 `/v1/chat/completions`
 
 ## 环境要求
 
@@ -33,12 +33,6 @@ OPENAI_IMAGE_MODEL=gpt-image-2
 npm run generate -- "A clean product photo of a ceramic tea cup on a walnut desk"
 ```
 
-也可以用显式版本命令：
-
-```bash
-npm run v1:generate -- "A simple red apple on a white background"
-```
-
 支持 `--prompt-file`：
 
 ```bash
@@ -56,7 +50,7 @@ npm run edit -- --image outputs/base.png "Change the background to pale blue"
 ## 探测聊天端点
 
 ```bash
-npm run v4:probe -- --prompt-file prompts/2.txt
+npm run probe -- --prompt-file prompts/2.txt
 ```
 
 它会请求 `/v1/chat/completions`，打印响应摘要，并尽量识别其中的图片候选内容。可选 `--save-images` 把 base64 图片候选保存到 `outputs/`。
@@ -88,7 +82,7 @@ npm run models
 - `--image <path>`
 - `--mask <path>`
 
-`v4:probe` 支持：
+`probe` 支持：
 
 - `--prompt-file <path>`
 - `--temperature <number>`

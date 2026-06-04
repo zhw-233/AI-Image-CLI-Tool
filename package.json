@@ -1,14 +1,12 @@
 {
   "name": "gpt-image-2-demo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "scripts": {
-    "v1:generate": "node src/generate.js",
-    "v2:edit": "node src/edit.js",
-    "v4:probe": "node src/chat-completions-probe.js",
     "generate": "node src/generate.js",
     "edit": "node src/edit.js",
+    "probe": "node src/chat-completions-probe.js",
     "dry-run": "node src/generate.js --dry-run \"A clean product photo of a ceramic tea cup on a walnut desk\"",
     "providers": "node src/switch-provider.js list",
     "provider:current": "node src/switch-provider.js current",

@@ -296,7 +296,6 @@ async function saveBase64Images(images, outputDir) {
     const image = images[index];
     const filename = makeFilename(`chat-candidate-${index + 1}`, image.extension, {
       fallback: "chat-candidate",
-      prefix: "v4",
     });
     const outputPath = path.join(outputDir, filename);
     await writeFile(outputPath, Buffer.from(image.value, "base64"));
