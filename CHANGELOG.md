@@ -2,6 +2,11 @@
 
 这个文件用于记录项目的重要变更。
 
+## 未发布
+
+- 新增 `src/chat-completions-probe.js`，用于测试第三方服务商是否只支持 `/v1/chat/completions`。
+- 新增 `npm run chat:probe` 脚本，方便用 `prompts/2.txt` 等长 prompt 测试聊天端点响应格式。
+
 ## v0.4.0 - 2026-06-04
 
 - 为 v1 文生图新增 `--prompt-file <path>`，支持从文本文件读取长 prompt。

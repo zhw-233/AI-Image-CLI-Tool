@@ -16,7 +16,8 @@
     "provider:use": "node src/switch-provider.js use",
     "doctor": "node src/doctor.js",
     "models": "node src/list-models.js",
-    "check": "node --check src/generate.js && node --check src/edit.js && node --check src/provider-guard.js && node --check src/switch-provider.js && node --check src/doctor.js && node --check src/list-models.js"
+    "chat:probe": "node src/chat-completions-probe.js",
+    "check": "node --check src/generate.js && node --check src/edit.js && node --check src/provider-guard.js && node --check src/switch-provider.js && node --check src/doctor.js && node --check src/list-models.js && node --check src/chat-completions-probe.js"
   },
   "engines": {
     "node": ">=20"
