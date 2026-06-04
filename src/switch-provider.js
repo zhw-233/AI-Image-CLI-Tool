@@ -148,10 +148,6 @@ Usage:
   npm run provider:current
   npm run provider:use -- <provider>
 
-Direct node usage:
-  node src/switch-provider.js list
-  node src/switch-provider.js current
-  node src/switch-provider.js use third-party
 `);
 }
 

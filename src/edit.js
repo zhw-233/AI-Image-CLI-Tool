@@ -42,7 +42,7 @@ async function main() {
 
   const prompt = await resolvePrompt(
     cli,
-    "Please provide an edit prompt. Example: node src/edit.js --image outputs/base.png \"Change the background to pale blue\""
+    "Please provide an edit prompt. Example: npm run edit -- --image outputs/base.png \"Change the background to pale blue\""
   );
   if (!prompt) {
     fail("Prompt file is empty after trimming.");
@@ -289,11 +289,11 @@ function getRequestId(headers) {
 function printHelp() {
   console.log(`
 Usage:
-  node src/edit.js --image <path> "Describe the desired change"
+  npm run edit -- --image <path> "Describe the desired change"
 
 Examples:
-  node src/edit.js --image outputs/base.png "Keep the apple, change the background to pale blue"
-  node src/edit.js --image outputs/base.png --mask masks/bg.png "Replace only the masked background with a sunny kitchen"
+  npm run edit -- --image outputs/base.png "Keep the apple, change the background to pale blue"
+  npm run edit -- --image outputs/base.png --mask masks/bg.png "Replace only the masked background with a sunny kitchen"
 
 Options:
   --image <path>          Input image. Can be repeated for references.

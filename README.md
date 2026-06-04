@@ -35,7 +35,7 @@ npm run generate -- "A clean product photo of a ceramic tea cup on a walnut desk
 支持 `--prompt-file`：
 
 ```bash
-node src/generate.js --prompt-file prompts/example.txt
+npm run generate -- --prompt-file prompts/example.txt
 ```
 
 ## 编辑图片

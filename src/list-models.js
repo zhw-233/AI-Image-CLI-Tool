@@ -6,7 +6,7 @@ async function main() {
   const env = await loadEnvFiles([".env", ".env.active"]);
   const apiKey = resolveApiKey(env);
   if (!apiKey) {
-    fail("Missing API key. Run: node src/doctor.js");
+    fail("Missing API key. Run: npm run doctor");
   }
 
   const baseUrl = env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
