@@ -1,5 +1,5 @@
 {
-  "name": "gpt-image-2-demo",
+  "name": "image-cli-tool",
   "version": "1.0.4",
   "private": true,
   "type": "module",

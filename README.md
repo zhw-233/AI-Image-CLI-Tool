@@ -1,6 +1,6 @@
-# gpt-image-2 示例项目
+# Image-CLI-Tool
 
-这是一个很小的 Node.js CLI，用来调用 OpenAI-compatible 的图片接口。
+这是一个很小的 Node.js CLI 工具，用来通过 OpenAI-compatible API 生成和编辑图片。
 
 当前包含两项主要能力：
 
