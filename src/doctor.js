@@ -1,38 +1,38 @@
 import process from "node:process";
-import { loadEnvFiles, resolveApiKey } from "./common.js";
+import { ENV_NAMES, loadEnvFiles, readEnv, resolveApiKey } from "./common.js";
 
-const DEFAULT_BASE_URL = "https://api.openai.com/v1";
+const DEFAULT_BASE_URL = "https://your-image-api.example.com/v1";
+const DEFAULT_MODEL = "image-model";
 
 async function main() {
   const env = await loadEnvFiles([".env", ".env.active"]);
-  const apiKeySource = env.OPENAI_API_KEY_ENV && env[env.OPENAI_API_KEY_ENV] ? env.OPENAI_API_KEY_ENV : "OPENAI_API_KEY";
+  const apiKeyEnv = readEnv(env, ENV_NAMES.apiKeyEnv);
+  const apiKeySource = apiKeyEnv && env[apiKeyEnv] ? apiKeyEnv : env.OPENAI_API_KEY && !env.IMAGE_API_KEY ? "OPENAI_API_KEY" : "IMAGE_API_KEY";
   const apiKey = resolveApiKey(env);
-  const baseUrl = env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
+  const baseUrl = readEnv(env, ENV_NAMES.baseUrl, DEFAULT_BASE_URL);
+  const generationPath = readEnv(env, ENV_NAMES.generationPath, "/images/generations");
+  const generationUrl = readEnv(env, ENV_NAMES.generationsUrl);
+  const model = readEnv(env, ENV_NAMES.model, DEFAULT_MODEL);
   const apiUrl =
-    env.OPENAI_IMAGE_GENERATIONS_URL ||
-    `${baseUrl.replace(/\/+$/g, "")}/${(env.OPENAI_IMAGE_PATH || "/images/generations").replace(/^\/+/g, "")}`;
+    generationUrl ||
+    `${baseUrl.replace(/\/+$/g, "")}/${generationPath.replace(/^\/+/g, "")}`;
 
   console.log("Image API configuration:");
   print("IMAGE_PROVIDER", env.IMAGE_PROVIDER || "(not set)");
-  print("OPENAI_BASE_URL", baseUrl);
-  print("OPENAI_IMAGE_GENERATIONS_URL", env.OPENAI_IMAGE_GENERATIONS_URL || "(derived)");
+  print("IMAGE_API_BASE_URL", baseUrl);
+  print("IMAGE_API_GENERATIONS_URL", generationUrl || "(derived)");
   print("Resolved request URL", apiUrl);
-  print("OPENAI_IMAGE_MODEL", env.OPENAI_IMAGE_MODEL || "gpt-image-2");
+  print("IMAGE_API_MODEL", model);
   print("API key source", apiKeySource);
   print("API key", maskSecret(apiKey));
-  print("OPENAI_AUTH_HEADER", env.OPENAI_AUTH_HEADER || "Authorization");
-  print("OPENAI_AUTH_SCHEME", env.OPENAI_AUTH_SCHEME ?? "Bearer");
-  print("OPENAI_EXTRA_HEADERS", env.OPENAI_EXTRA_HEADERS || "(not set)");
+  print("IMAGE_API_AUTH_HEADER", readEnv(env, ENV_NAMES.authHeader, "Authorization"));
+  print("IMAGE_API_AUTH_SCHEME", readEnv(env, ENV_NAMES.authScheme, "Bearer", { allowEmpty: true }));
+  print("IMAGE_API_EXTRA_HEADERS", readEnv(env, ENV_NAMES.extraHeaders, "(not set)"));
 
   console.log("\nChecks:");
   check(Boolean(apiKey), "API key is present", "API key is missing.");
   check(!isPlaceholder(apiKey), "API key does not look like the placeholder", "API key still looks like a placeholder.");
   check(Boolean(baseUrl), "Base URL is present", "Base URL is missing.");
-  check(
-    !(baseUrl.includes("api.openai.com") && apiKeySource !== "OPENAI_API_KEY"),
-    "Official OpenAI URL is not paired with a third-party key variable",
-    "Official OpenAI URL appears to be paired with a third-party key variable."
-  );
 }
 
 function maskSecret(value) {

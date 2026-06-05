@@ -110,16 +110,16 @@ function renderActiveEnv(profileKey, provider) {
     `IMAGE_PROVIDER=${profileKey}`,
   ];
 
-  append(lines, "OPENAI_BASE_URL", provider.baseUrl);
-  append(lines, "OPENAI_IMAGE_GENERATIONS_URL", provider.apiUrl);
-  append(lines, "OPENAI_IMAGE_MODEL", provider.model);
-  append(lines, "OPENAI_API_KEY_ENV", provider.apiKeyEnv);
-  append(lines, "OPENAI_API_KEY", provider.apiKey);
-  append(lines, "OPENAI_AUTH_HEADER", provider.authHeader);
-  append(lines, "OPENAI_AUTH_SCHEME", provider.authScheme);
+  append(lines, "IMAGE_API_BASE_URL", provider.baseUrl);
+  append(lines, "IMAGE_API_GENERATIONS_URL", provider.apiUrl);
+  append(lines, "IMAGE_API_MODEL", provider.model);
+  append(lines, "IMAGE_API_KEY_ENV", provider.apiKeyEnv);
+  append(lines, "IMAGE_API_KEY", provider.apiKey);
+  append(lines, "IMAGE_API_AUTH_HEADER", provider.authHeader);
+  append(lines, "IMAGE_API_AUTH_SCHEME", provider.authScheme);
 
   if (provider.extraHeaders) {
-    lines.push(`OPENAI_EXTRA_HEADERS=${JSON.stringify(provider.extraHeaders)}`);
+    lines.push(`IMAGE_API_EXTRA_HEADERS=${JSON.stringify(provider.extraHeaders)}`);
   }
 
   return `${lines.join("\n")}\n`;

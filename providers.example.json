@@ -1,17 +1,17 @@
 {
   "providers": {
-    "openai": {
-      "name": "OpenAI",
-      "baseUrl": "https://api.openai.com/v1",
-      "model": "gpt-image-2",
-      "apiKeyEnv": "OPENAI_API_KEY",
+    "default": {
+      "name": "Default image API provider",
+      "baseUrl": "https://your-image-api.example.com/v1",
+      "model": "your-image-model",
+      "apiKeyEnv": "IMAGE_API_KEY",
       "authHeader": "Authorization",
       "authScheme": "Bearer"
     },
     "third-party": {
-      "name": "Your OpenAI-compatible provider",
-      "baseUrl": "https://your-provider.example.com/v1",
-      "model": "gpt-image-2",
+      "name": "Another image API provider",
+      "baseUrl": "https://another-image-api.example.com/v1",
+      "model": "another-image-model",
       "apiKeyEnv": "THIRD_PARTY_API_KEY",
       "authHeader": "Authorization",
       "authScheme": "Bearer",

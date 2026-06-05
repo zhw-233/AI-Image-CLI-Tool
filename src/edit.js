@@ -5,10 +5,12 @@ import process from "node:process";
 import {
   baseUrlFromApiUrl,
   buildHeaders,
+  ENV_NAMES,
   joinUrl,
   loadEnvFiles,
   makeFilename,
   parseJson,
+  readEnv,
   readPromptFile,
   readValue,
   resolveApiKey,
@@ -16,9 +18,9 @@ import {
 } from "./common.js";
 
 const DEFAULTS = {
-  baseUrl: "https://api.openai.com/v1",
+  baseUrl: "https://your-image-api.example.com/v1",
   editPath: "/images/edits",
-  model: "gpt-image-2",
+  model: "image-model",
   size: "1024x1024",
   quality: "auto",
   background: "auto",
@@ -53,10 +55,10 @@ async function main() {
   }
 
   const options = {
-    apiUrl: cli.apiUrl ?? process.env.OPENAI_IMAGE_EDITS_URL,
-    baseUrl: cli.baseUrl ?? process.env.OPENAI_BASE_URL ?? DEFAULTS.baseUrl,
-    editPath: process.env.OPENAI_IMAGE_EDIT_PATH ?? DEFAULTS.editPath,
-    model: cli.model ?? process.env.OPENAI_IMAGE_MODEL ?? DEFAULTS.model,
+    apiUrl: cli.apiUrl ?? readEnv(process.env, ENV_NAMES.editsUrl),
+    baseUrl: cli.baseUrl ?? readEnv(process.env, ENV_NAMES.baseUrl, DEFAULTS.baseUrl),
+    editPath: readEnv(process.env, ENV_NAMES.editPath, DEFAULTS.editPath),
+    model: cli.model ?? readEnv(process.env, ENV_NAMES.model, DEFAULTS.model),
     size: cli.size ?? process.env.IMAGE_SIZE ?? DEFAULTS.size,
     quality: cli.quality ?? process.env.IMAGE_QUALITY ?? DEFAULTS.quality,
     background: cli.background ?? process.env.IMAGE_BACKGROUND ?? DEFAULTS.background,
@@ -84,7 +86,7 @@ async function main() {
   step("Resolving API key");
   const apiKey = resolveApiKey(process.env);
   if (!apiKey) {
-    fail("Missing API key. Set OPENAI_API_KEY, or set OPENAI_API_KEY_ENV to the name of another key variable.");
+    fail("Missing API key. Set IMAGE_API_KEY, or set IMAGE_API_KEY_ENV to the name of another key variable.");
   }
 
   const headers = buildHeaders(process.env, apiKey, { contentType: undefined });
@@ -111,7 +113,7 @@ async function main() {
   const body = parseJson(rawBody);
   if (!response.ok) {
     const detail = body?.error?.message ?? (truncate(rawBody) || response.statusText);
-    fail(`OpenAI API request failed (${response.status}): ${detail}`);
+    fail(`Image API request failed (${response.status}): ${detail}`);
   }
 
   step("Reading edited image data from response");
@@ -271,8 +273,6 @@ function getRequestId(headers) {
   const candidates = [
     "x-request-id",
     "request-id",
-    "openai-request-id",
-    "x-openai-request-id",
     "cf-ray",
   ];
 
@@ -298,10 +298,10 @@ Examples:
 Options:
   --image <path>          Input image. Can be repeated for references.
   --mask <path>           Optional mask image for partial edits.
-  --base-url <url>        OpenAI-compatible base URL. Defaults to OPENAI_BASE_URL.
+  --base-url <url>        Image API base URL. Defaults to IMAGE_API_BASE_URL.
   --api-url <url>         Full image edits endpoint URL. Overrides base URL.
   --prompt-file <path>    Read the prompt from a UTF-8 text file.
-  --model <name>          Image model. Defaults to OPENAI_IMAGE_MODEL or gpt-image-2.
+  --model <name>          Image model. Defaults to IMAGE_API_MODEL.
   --size <size>           Example: 1024x1024, 1024x1536, 1536x1024.
   --quality <quality>     Example: auto, low, medium, high.
   --background <value>    Example: auto, transparent, opaque.

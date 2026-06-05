@@ -1,6 +1,6 @@
 # Image-CLI-Tool
 
-这是一个很小的 Node.js CLI 工具，用来通过 OpenAI-compatible API 生成和编辑图片。
+这是一个很小的 Node.js CLI 工具，用来通过图片 API 生成和编辑图片。
 
 当前包含两项主要能力：
 
@@ -10,7 +10,7 @@
 ## 环境要求
 
 - Node.js 20 或更新版本
-- OpenAI 或第三方 OpenAI-compatible API key
+- 图片 API 服务商的 API key
 
 ## 基础配置
 
@@ -21,9 +21,9 @@ cp .env.example .env
 然后编辑 `.env`：
 
 ```bash
-OPENAI_API_KEY=sk-your-api-key
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_IMAGE_MODEL=gpt-image-2
+IMAGE_API_KEY=your-api-key
+IMAGE_API_BASE_URL=https://your-image-api.example.com/v1
+IMAGE_API_MODEL=your-image-model
 ```
 
 ## 生成图片
@@ -57,10 +57,10 @@ npm run edit -- --image outputs/base.png --format png "Make the background trans
 
 通用参数，也就是 `generate` 和 `edit` 都支持：
 
-- `--base-url <url>`：设置 OpenAI-compatible API 的基础地址，例如 `https://api.openai.com/v1`。它会覆盖 `.env` 里的 `OPENAI_BASE_URL`。
+- `--base-url <url>`：设置图片 API 的基础地址，例如 `https://your-image-api.example.com/v1`。它会覆盖 `.env` 里的 `IMAGE_API_BASE_URL`。
 - `--api-url <url>`：直接指定完整接口地址。生成图片时对应图片生成接口，编辑图片时对应图片编辑接口；它的优先级高于 `--base-url`。
 - `--prompt-file <path>`：从 UTF-8 文本文件读取 prompt，适合较长或多行提示词。使用它时不要再额外传入行内 prompt。
-- `--model <name>`：指定模型名称，例如 `gpt-image-2`。它会覆盖 `.env` 里的 `OPENAI_IMAGE_MODEL`。
+- `--model <name>`：指定模型名称，例如你的服务商提供的图片模型名。它会覆盖 `.env` 里的 `IMAGE_API_MODEL`。
 - `--size <size>`：指定图片尺寸，例如 `1024x1024`、`1024x1536`、`1536x1024`。是否支持取决于模型和服务商。
 - `--quality <quality>`：指定图片质量，例如 `auto`、`low`、`medium`、`high`。如果保持 `auto`，请求里不会显式发送这个字段。
 - `--background <value>`：指定背景选项，例如 `auto`、`transparent`、`opaque`。如果保持 `auto`，请求里不会显式发送这个字段。
@@ -88,7 +88,7 @@ npm run edit -- --image outputs/base.png --mask masks/background.png "Replace th
 
 ## 切换 API 服务商
 
-项目支持通过 `providers.json` 管理多个 OpenAI-compatible API 服务商。先复制示例配置：
+项目支持通过 `providers.json` 管理多个图片 API 服务商。先复制示例配置：
 
 ```bash
 cp providers.example.json providers.json

@@ -1,6 +1,6 @@
-import { loadEnvFiles, resolveApiKey, buildHeaders } from "./common.js";
+import { loadEnvFiles, resolveApiKey, buildHeaders, readEnv, ENV_NAMES } from "./common.js";
 
-const DEFAULT_BASE_URL = "https://api.openai.com/v1";
+const DEFAULT_BASE_URL = "https://your-image-api.example.com/v1";
 
 async function main() {
   const env = await loadEnvFiles([".env", ".env.active"]);
@@ -9,7 +9,7 @@ async function main() {
     fail("Missing API key. Run: npm run doctor");
   }
 
-  const baseUrl = env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
+  const baseUrl = readEnv(env, ENV_NAMES.baseUrl, DEFAULT_BASE_URL);
   const url = `${baseUrl.replace(/\/+$/g, "")}/models`;
   const response = await fetch(url, {
     headers: buildHeaders(env, apiKey),

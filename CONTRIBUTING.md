@@ -22,4 +22,4 @@ npm run generate -- --dry-run "A simple red apple on a white background"
 
 ## 密钥与敏感信息
 
-不要提交真实 API key、服务商密钥、`.env`、`.env.active`、`providers.json`、`.provider-guard.json` 或已经生成的图片文件。
+不要提交真实 API key、服务商密钥、`.env`、`.env.active`、`providers.json` 或已经生成的图片文件。

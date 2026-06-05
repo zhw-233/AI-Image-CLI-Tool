@@ -3,6 +3,20 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
+export const ENV_NAMES = {
+  apiKey: ["IMAGE_API_KEY", "OPENAI_API_KEY"],
+  apiKeyEnv: ["IMAGE_API_KEY_ENV", "OPENAI_API_KEY_ENV"],
+  authHeader: ["IMAGE_API_AUTH_HEADER", "OPENAI_AUTH_HEADER"],
+  authScheme: ["IMAGE_API_AUTH_SCHEME", "OPENAI_AUTH_SCHEME"],
+  baseUrl: ["IMAGE_API_BASE_URL", "OPENAI_BASE_URL"],
+  editPath: ["IMAGE_API_EDIT_PATH", "OPENAI_IMAGE_EDIT_PATH"],
+  editsUrl: ["IMAGE_API_EDITS_URL", "OPENAI_IMAGE_EDITS_URL"],
+  extraHeaders: ["IMAGE_API_EXTRA_HEADERS", "OPENAI_EXTRA_HEADERS"],
+  generationPath: ["IMAGE_API_GENERATION_PATH", "OPENAI_IMAGE_PATH"],
+  generationsUrl: ["IMAGE_API_GENERATIONS_URL", "OPENAI_IMAGE_GENERATIONS_URL"],
+  model: ["IMAGE_API_MODEL", "OPENAI_IMAGE_MODEL"],
+};
+
 export async function loadEnvFiles(files, { mutateProcessEnv = false } = {}) {
   const env = {};
 
@@ -55,17 +69,17 @@ export function stripQuotes(value) {
 }
 
 export function resolveApiKey(env) {
-  const apiKeyEnv = env.OPENAI_API_KEY_ENV;
+  const apiKeyEnv = readEnv(env, ENV_NAMES.apiKeyEnv);
   if (apiKeyEnv && env[apiKeyEnv]) {
     return env[apiKeyEnv];
   }
 
-  return env.OPENAI_API_KEY;
+  return readEnv(env, ENV_NAMES.apiKey);
 }
 
 export function buildHeaders(env, apiKey, { contentType = "application/json" } = {}) {
-  const authHeader = env.OPENAI_AUTH_HEADER || "Authorization";
-  const authScheme = env.OPENAI_AUTH_SCHEME ?? "Bearer";
+  const authHeader = readEnv(env, ENV_NAMES.authHeader, "Authorization");
+  const authScheme = readEnv(env, ENV_NAMES.authScheme, "Bearer", { allowEmpty: true });
   const headers = {
     ...readExtraHeaders(env),
     [authHeader]: authScheme ? `${authScheme} ${apiKey}` : apiKey,
@@ -79,7 +93,7 @@ export function buildHeaders(env, apiKey, { contentType = "application/json" } =
 }
 
 export function readExtraHeaders(env) {
-  const rawHeaders = env.OPENAI_EXTRA_HEADERS;
+  const rawHeaders = readEnv(env, ENV_NAMES.extraHeaders);
   if (!rawHeaders || rawHeaders === "{}") {
     return {};
   }
@@ -87,15 +101,25 @@ export function readExtraHeaders(env) {
   try {
     const headers = JSON.parse(rawHeaders);
     if (!headers || Array.isArray(headers) || typeof headers !== "object") {
-      fail('OPENAI_EXTRA_HEADERS must be a JSON object, for example: {"X-Provider":"example"}');
+      fail('IMAGE_API_EXTRA_HEADERS must be a JSON object, for example: {"X-Provider":"example"}');
     }
 
     return headers;
   } catch (error) {
     fail(
-      `OPENAI_EXTRA_HEADERS must be valid JSON. Use double quotes, for example: {"X-Provider":"example"}. ${error.message}`
+      `IMAGE_API_EXTRA_HEADERS must be valid JSON. Use double quotes, for example: {"X-Provider":"example"}. ${error.message}`
     );
   }
+}
+
+export function readEnv(env, names, fallbackValue, { allowEmpty = false } = {}) {
+  for (const name of names) {
+    if (env[name] !== undefined && (allowEmpty || env[name] !== "")) {
+      return env[name];
+    }
+  }
+
+  return fallbackValue;
 }
 
 export function joinUrl(baseUrl, pathname) {
@@ -134,8 +158,6 @@ export function getRequestId(headers) {
   const candidates = [
     "x-request-id",
     "request-id",
-    "openai-request-id",
-    "x-openai-request-id",
     "cf-ray",
   ];
 
