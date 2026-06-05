@@ -96,6 +96,65 @@ cp providers.example.json providers.json
 
 然后编辑 `providers.json`，为每个服务商填写 `baseUrl`、`model`、`apiKeyEnv` 等信息。示例里的 `third-party` 可以改成你自己的服务商名称。
 
+`apiKeyEnv` 填的是“环境变量名”，不是 API key 本身。这样可以把密钥继续放在 `.env` 里，而不是写进 `providers.json`。
+
+例如你的 `.env` 里这样写：
+
+```bash
+IMAGE_API_KEY=provider-a-key
+PROVIDER_B_API_KEY=provider-b-key
+```
+
+那么 `providers.json` 可以这样对应：
+
+```json
+{
+  "providers": {
+    "provider-a": {
+      "name": "Provider A",
+      "baseUrl": "https://provider-a.example.com/v1",
+      "model": "provider-a-image-model",
+      "apiKeyEnv": "IMAGE_API_KEY",
+      "authHeader": "Authorization",
+      "authScheme": "Bearer"
+    },
+    "provider-b": {
+      "name": "Provider B",
+      "baseUrl": "https://provider-b.example.com/v1",
+      "model": "provider-b-image-model",
+      "apiKeyEnv": "PROVIDER_B_API_KEY",
+      "authHeader": "Authorization",
+      "authScheme": "Bearer"
+    }
+  }
+}
+```
+
+切换到 `provider-b` 后，脚本会从 `.env` 里的 `PROVIDER_B_API_KEY` 读取密钥。也就是说：
+
+- `.env` 负责保存真实密钥，例如 `PROVIDER_B_API_KEY=...`
+- `providers.json` 负责告诉项目“这个服务商应该读取哪个变量”，例如 `"apiKeyEnv": "PROVIDER_B_API_KEY"`
+- 不建议把真实 key 直接写进 `providers.json`
+
+如果服务商不是 `Authorization: Bearer <key>` 这种鉴权方式，可以在对应 provider 里调整：
+
+```json
+{
+  "authHeader": "x-api-key",
+  "authScheme": ""
+}
+```
+
+如果服务商需要额外请求头，可以加入 `extraHeaders`：
+
+```json
+{
+  "extraHeaders": {
+    "X-Provider": "example"
+  }
+}
+```
+
 查看可用服务商：
 
 ```bash
@@ -115,6 +174,25 @@ npm run provider:current
 ```
 
 切换命令会生成 `.env.active`。运行生成或编辑命令时，项目会先读取 `.env`，再读取 `.env.active`，所以你可以保留一份基础配置，再用 provider 切换命令覆盖当前服务商、模型和鉴权方式。
+
+例如执行：
+
+```bash
+npm run provider:use -- provider-b
+```
+
+会生成类似这样的 `.env.active`：
+
+```bash
+IMAGE_PROVIDER=provider-b
+IMAGE_API_BASE_URL=https://provider-b.example.com/v1
+IMAGE_API_MODEL=provider-b-image-model
+IMAGE_API_KEY_ENV=PROVIDER_B_API_KEY
+IMAGE_API_AUTH_HEADER=Authorization
+IMAGE_API_AUTH_SCHEME=Bearer
+```
+
+此时真实密钥仍然来自 `.env` 里的 `PROVIDER_B_API_KEY`。
 
 ## 诊断
 
