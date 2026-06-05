@@ -1,4 +1,4 @@
-# Image-CLI-Tool
+# AI-Image-CLI-Tool
 
 这是一个很小的 Node.js CLI 工具，用来通过图片 API 生成和编辑图片。
 
