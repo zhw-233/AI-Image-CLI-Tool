@@ -48,23 +48,42 @@ npm run edit -- --image outputs/base.png "Change the background to pale blue"
 
 ## 参数说明
 
-`--image <path>` 用在图片编辑命令里，表示要上传给模型参考或修改的原图。至少需要提供一个 `--image`，也可以重复多次传入多张参考图：
+下面这些参数在命令里都要放在 `--` 后面，例如：
+
+```bash
+npm run generate -- --format webp "A minimal product photo on a white table"
+npm run edit -- --image outputs/base.png --format png "Make the background transparent"
+```
+
+通用参数，也就是 `generate` 和 `edit` 都支持：
+
+- `--base-url <url>`：设置 OpenAI-compatible API 的基础地址，例如 `https://api.openai.com/v1`。它会覆盖 `.env` 里的 `OPENAI_BASE_URL`。
+- `--api-url <url>`：直接指定完整接口地址。生成图片时对应图片生成接口，编辑图片时对应图片编辑接口；它的优先级高于 `--base-url`。
+- `--prompt-file <path>`：从 UTF-8 文本文件读取 prompt，适合较长或多行提示词。使用它时不要再额外传入行内 prompt。
+- `--model <name>`：指定模型名称，例如 `gpt-image-2`。它会覆盖 `.env` 里的 `OPENAI_IMAGE_MODEL`。
+- `--size <size>`：指定图片尺寸，例如 `1024x1024`、`1024x1536`、`1536x1024`。是否支持取决于模型和服务商。
+- `--quality <quality>`：指定图片质量，例如 `auto`、`low`、`medium`、`high`。如果保持 `auto`，请求里不会显式发送这个字段。
+- `--background <value>`：指定背景选项，例如 `auto`、`transparent`、`opaque`。如果保持 `auto`，请求里不会显式发送这个字段。
+- `--format <format>`：指定保存结果的图片格式，常见值是 `png`、`jpeg`、`webp`。
+- `--output-dir <path>`：指定图片输出目录，默认是 `outputs`。
+- `--dry-run`：只打印即将发送的请求地址和参数，不调用 API，也不会生成图片。
+- `--help`：显示当前命令支持的参数。
+
+编辑图片专用参数：
+
+- `--image <path>`：上传给模型参考或修改的原图。编辑命令至少需要一个 `--image`，也可以重复多次传入多张参考图。
+- `--mask <path>`：指定局部编辑用的 mask 图片，表示只允许修改 mask 标记的区域。mask 通常是一张和原图尺寸一致的图片，具体透明区域、黑白区域如何解释取决于服务商接口实现。
+
+多图参考示例：
 
 ```bash
 npm run edit -- --image outputs/base.png --image outputs/reference.png "Keep the main object and use the reference style"
 ```
 
-`--mask <path>` 用在图片编辑命令里，表示只允许修改 mask 标记的区域。mask 通常是一张和原图尺寸一致的图片，具体透明区域、黑白区域如何解释取决于你使用的服务商接口实现。
+局部编辑示例：
 
 ```bash
 npm run edit -- --image outputs/base.png --mask masks/background.png "Replace the background with a sunny kitchen"
-```
-
-`--format <format>` 用来指定保存结果的图片格式，常见值是 `png`、`jpeg`、`webp`。它可以用于生成图片和编辑图片：
-
-```bash
-npm run generate -- --format webp "A minimal product photo on a white table"
-npm run edit -- --image outputs/base.png --format png "Make the background transparent"
 ```
 
 ## 切换 API 服务商
@@ -103,26 +122,6 @@ npm run provider:current
 npm run doctor
 npm run models
 ```
-
-## 常用参数
-
-`generate` 支持：
-
-- `--base-url <url>`
-- `--api-url <url>`
-- `--prompt-file <path>`
-- `--model <name>`
-- `--size <size>`
-- `--quality <quality>`
-- `--background <value>`
-- `--format <format>`
-- `--output-dir <path>`
-- `--dry-run`
-
-`edit` 额外支持：
-
-- `--image <path>`
-- `--mask <path>`
 
 ## 输出
 
