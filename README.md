@@ -204,4 +204,3 @@ npm run models
 ## 输出
 
 生成结果默认保存在 `outputs/`。
-# ImgShift-Tool
